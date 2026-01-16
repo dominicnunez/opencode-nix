@@ -14,7 +14,7 @@
     }:
     let
       overlay = final: prev: {
-        opencode-nix = final.callPackage ./package.nix { };
+        opencode = final.callPackage ./package.nix { };
       };
     in
     flake-utils.lib.eachDefaultSystem (
@@ -27,19 +27,19 @@
       in
       {
         packages = {
-          default = pkgs.opencode-nix;
-          opencode = pkgs.opencode-nix;
+          default = pkgs.opencode;
+          opencode = pkgs.opencode;
         };
 
         apps = {
           default = {
             type = "app";
-            program = "${pkgs.opencode-nix}/bin/opencode";
+            program = "${pkgs.opencode}/bin/opencode";
             meta.description = "AI coding assistant in your terminal";
           };
           opencode = {
             type = "app";
-            program = "${pkgs.opencode-nix}/bin/opencode";
+            program = "${pkgs.opencode}/bin/opencode";
             meta.description = "AI coding assistant in your terminal";
           };
         };

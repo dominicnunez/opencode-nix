@@ -100,8 +100,6 @@ extra-trusted-public-keys = opencode.cachix.org-1:LdhuFTs/xrlYuchvsF+cOBCgCKEJIc
 
 ### Using the Overlay
 
-The overlay exports `opencode-nix` (not `opencode`) to avoid conflicts with nixpkgs:
-
 ```nix
 {
   inputs = {
@@ -117,9 +115,9 @@ The overlay exports `opencode-nix` (not `opencode`) to avoid conflicts with nixp
         overlays = [ opencode-nix.overlays.default ];
       };
     in {
-      # pkgs.opencode-nix is now available
+      # pkgs.opencode is now available
       devShells.${system}.default = pkgs.mkShell {
-        buildInputs = [ pkgs.opencode-nix ];
+        buildInputs = [ pkgs.opencode ];
       };
     };
 }
