@@ -1,0 +1,25 @@
+# Nix build output (symlink, not directory)
+result
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+.directory
+
+# Local/development scripts
+gh-init.sh
+GOALS.md
+ralph.sh
+ralphoc.sh
+progress.txt
+
+# Project planning
+PRD.md
