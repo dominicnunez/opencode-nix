@@ -43,81 +43,35 @@ let
       [[ -d "/etc/profiles/per-user/$USER" ]]
     }
 
-    # Get state file path (XDG compliant)
-    get_state_file() {
-      local data_home="''${XDG_DATA_HOME:-$HOME/.local/share}"
-      echo "$data_home/opencode-nix/.symlink-state"
-    }
-
-    # Read current state from file
-    read_state() {
-      local state_file
-      state_file="$(get_state_file)"
-      if [[ -f "$state_file" ]]; then
-        # shellcheck source=/dev/null
-        source "$state_file"
-        echo "''${BINARY_PATH:-}:''${HM_DETECTED:-}"
-      else
-        echo ":"
-      fi
-    }
-
-    # Write state to file
-    write_state() {
-      local binary_path="$1"
-      local hm_detected="$2"
-      local state_file
-      state_file="$(get_state_file)"
-      local state_dir
-      state_dir="$(dirname "$state_file")"
-
-      mkdir -p "$state_dir"
-      cat > "$state_file" << STATE_EOF
-    BINARY_PATH=$binary_path
-    HM_DETECTED=$hm_detected
-    STATE_EOF
-    }
-
-    # Symlink management (only when state changes)
+    # Symlink management (only when target changes)
     manage_symlink() {
       local target_dir="$HOME/.local/bin"
       local symlink_path="$target_dir/opencode"
       local binary_path="@out@/bin/.opencode-unwrapped"
-      local hm_detected
 
+      # Skip if Home Manager is active
       if is_home_manager_active; then
-        hm_detected="true"
-      else
-        hm_detected="false"
-      fi
-
-      # Check if state has changed
-      local current_state="$binary_path:$hm_detected"
-      local stored_state
-      stored_state="$(read_state)"
-
-      if [[ "$current_state" == "$stored_state" ]]; then
-        # State unchanged, skip symlink management
-        return 0
-      fi
-
-      # State changed, perform symlink management
-      if [[ "$hm_detected" == "true" ]]; then
-        # Home Manager detected - skip symlink creation
         if [[ -z "''${OPENCODE_NIX_QUIET:-}" ]]; then
           echo "[opencode-nix] Home Manager detected, skipping symlink creation" >&2
         fi
-      else
-        # No Home Manager - create convenience symlink
-        mkdir -p "$target_dir"
-        ln -sf "$binary_path" "$symlink_path"
-        if [[ -z "''${OPENCODE_NIX_QUIET:-}" ]]; then
-          echo "[opencode-nix] Created symlink: $symlink_path -> $binary_path" >&2
-        fi
+        return 0
       fi
 
-      # Update state file
-      write_state "$binary_path" "$hm_detected"
+      # Check if symlink already points to the correct target
+      local current_target
+      current_target="$(readlink -f "$symlink_path" 2>/dev/null || echo "")"
+
+      if [[ "$current_target" == "$binary_path" ]]; then
+        # Symlink already correct, nothing to do
+        return 0
+      fi
+
+      # Create or update symlink
+      mkdir -p "$target_dir"
+      ln -sf "$binary_path" "$symlink_path"
+      if [[ -z "''${OPENCODE_NIX_QUIET:-}" ]]; then
+        echo "[opencode-nix] Created symlink: $symlink_path -> $binary_path" >&2
+      fi
     }
 
     # Run symlink management
