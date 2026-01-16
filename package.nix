@@ -157,23 +157,29 @@ stdenv.mkDerivation {
   '';
 
   installPhase = ''
-        runHook preInstall
-        mkdir -p $out/bin
+    runHook preInstall
+    mkdir -p $out/bin
 
-        # Install unwrapped binary
-        cp opencode $out/bin/.opencode-unwrapped
-        chmod +x $out/bin/.opencode-unwrapped
+    ${if isDarwin then ''
+      # macOS: Install unwrapped binary and wrapper script
+      cp opencode $out/bin/.opencode-unwrapped
+      chmod +x $out/bin/.opencode-unwrapped
 
-        # Install wrapper script
-        cat > $out/bin/opencode << 'WRAPPER_EOF'
-    ${wrapperScript}
-    WRAPPER_EOF
-        chmod +x $out/bin/opencode
+      # Install wrapper script with Home Manager detection
+      cat > $out/bin/opencode << 'WRAPPER_EOF'
+${wrapperScript}
+WRAPPER_EOF
+      chmod +x $out/bin/opencode
 
-        # Substitute @out@ placeholder
-        substituteInPlace $out/bin/opencode --replace-quiet "@out@" "$out"
+      # Substitute @out@ placeholder
+      substituteInPlace $out/bin/opencode --replace-quiet "@out@" "$out"
+    '' else ''
+      # Linux: Install binary directly (no wrapper needed)
+      cp opencode $out/bin/opencode
+      chmod +x $out/bin/opencode
+    ''}
 
-        runHook postInstall
+    runHook postInstall
   '';
 
   meta = with lib; {
