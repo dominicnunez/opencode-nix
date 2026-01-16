@@ -53,6 +53,8 @@
             jq
           ];
         };
+
+        formatter = pkgs.nixpkgs-fmt;
       }
     )
     // {
