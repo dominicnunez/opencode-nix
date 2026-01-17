@@ -94,13 +94,15 @@ stdenv.mkDerivation {
 
   sourceRoot = ".";
 
-  nativeBuildInputs =
-    lib.optionals stdenv.hostPlatform.isLinux [
-      autoPatchelfHook
-    ]
-    ++ lib.optionals isDarwin [
-      unzip
-    ];
+  nativeBuildInputs = [
+    makeWrapper
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isLinux [
+    autoPatchelfHook
+  ]
+  ++ lib.optionals isDarwin [
+    unzip
+  ];
 
   # autoPatchelfHook needs stdenv.cc.cc.lib for libstdc++.so.6
   # Required by bundled native modules (file watcher, state management)
@@ -142,9 +144,13 @@ stdenv.mkDerivation {
         ''
       else
         ''
-          # Linux: Install binary directly (no wrapper needed)
-          cp opencode $out/bin/opencode
-          chmod +x $out/bin/opencode
+          # Linux: Install binary and wrap with LD_LIBRARY_PATH for native modules
+          cp opencode $out/bin/.opencode-unwrapped
+          chmod +x $out/bin/.opencode-unwrapped
+
+          # Wrap binary to set LD_LIBRARY_PATH for dlopen'd native modules (libstdc++)
+          makeWrapper $out/bin/.opencode-unwrapped $out/bin/opencode \
+            --prefix LD_LIBRARY_PATH : "${stdenv.cc.cc.lib}/lib"
         ''
     }
 
