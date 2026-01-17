@@ -198,19 +198,16 @@ The script:
 
 A GitHub Actions workflow runs hourly to check for new releases. When a new version is found, it automatically:
 1. Updates `version.json` with new version and hashes
-2. Creates a PR with title "chore: update opencode to {version}"
-3. Enables auto-merge after CI passes
+2. Validates with `nix flake check`
+3. Creates a PR and merges it
 
-### Repository Settings for Auto-Updates
+### Repository Settings
 
 For the automated workflow to function, configure these GitHub settings:
 
 **Settings > Actions > General > Workflow permissions:**
 - Select "Read and write permissions"
 - Check "Allow GitHub Actions to create and approve pull requests"
-
-**Settings > General > Pull Requests:**
-- Check "Allow auto-merge"
 
 ## License
 

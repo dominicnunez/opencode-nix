@@ -87,12 +87,12 @@ jobs:
           )" --base main --head "$branch" --label "automated")
           echo "pr_url=$pr_url" >> $GITHUB_OUTPUT
 
-      - name: Enable Auto-Merge
+      - name: Merge Pull Request
         if: steps.check.outputs.update_needed == 'true' && steps.create-pr.outputs.pr_url
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh pr merge --auto --squash --delete-branch "${{ steps.create-pr.outputs.pr_url }}"
+          gh pr merge --squash --delete-branch "${{ steps.create-pr.outputs.pr_url }}"
 
       - name: Summary
         if: always()
