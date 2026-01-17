@@ -133,10 +133,10 @@ This package includes smart Home Manager detection. When Home Manager is detecte
 - `/etc/profiles/per-user/$USER` directory exists
 
 **Behavior:**
-- **Home Manager detected:** Skips symlink creation, prints info message
+- **Home Manager detected:** Skips symlink creation and cleans up any orphaned symlinks
 - **Home Manager absent:** Creates `~/.local/bin/opencode` symlink for convenience
 
-Symlink management uses state tracking - it only runs when the package version changes or Home Manager status changes, not on every launch.
+**Automatic cleanup:** If you previously installed opencode standalone (creating a `~/.local/bin/opencode` symlink) and later enable Home Manager, the package will automatically remove the orphaned symlink on first run to prevent PATH conflicts.
 
 ## Environment Variables
 

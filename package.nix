@@ -49,10 +49,18 @@ let
       local symlink_path="$target_dir/opencode"
       local binary_path="@out@/bin/.opencode-unwrapped"
 
-      # Skip if Home Manager is active
+      # If Home Manager is active, clean up any orphaned symlink and skip creation
       if is_home_manager_active; then
-        if [[ -z "''${OPENCODE_NIX_QUIET:-}" ]]; then
-          echo "[opencode-nix] Home Manager detected, skipping symlink creation" >&2
+        # Remove symlink if it points to a Nix store path (we likely created it)
+        if [[ -L "$symlink_path" ]]; then
+          local link_target
+          link_target="$(readlink "$symlink_path" 2>/dev/null || echo "")"
+          if [[ "$link_target" == /nix/store/* ]]; then
+            rm -f "$symlink_path"
+            if [[ -z "''${OPENCODE_NIX_QUIET:-}" ]]; then
+              echo "[opencode-nix] Removed orphaned symlink: $symlink_path (Home Manager now manages opencode)" >&2
+            fi
+          fi
         fi
         return 0
       fi
@@ -114,24 +122,29 @@ stdenv.mkDerivation {
     runHook preInstall
     mkdir -p $out/bin
 
-    ${if isDarwin then ''
-      # macOS: Install unwrapped binary and wrapper script
-      cp opencode $out/bin/.opencode-unwrapped
-      chmod +x $out/bin/.opencode-unwrapped
+    ${
+      if isDarwin then
+        ''
+                # macOS: Install unwrapped binary and wrapper script
+                cp opencode $out/bin/.opencode-unwrapped
+                chmod +x $out/bin/.opencode-unwrapped
 
-      # Install wrapper script with Home Manager detection
-      cat > $out/bin/opencode << 'WRAPPER_EOF'
-${wrapperScript}
-WRAPPER_EOF
-      chmod +x $out/bin/opencode
+                # Install wrapper script with Home Manager detection
+                cat > $out/bin/opencode << 'WRAPPER_EOF'
+          ${wrapperScript}
+          WRAPPER_EOF
+                chmod +x $out/bin/opencode
 
-      # Substitute @out@ placeholder
-      substituteInPlace $out/bin/opencode --replace-quiet "@out@" "$out"
-    '' else ''
-      # Linux: Install binary directly (no wrapper needed)
-      cp opencode $out/bin/opencode
-      chmod +x $out/bin/opencode
-    ''}
+                # Substitute @out@ placeholder
+                substituteInPlace $out/bin/opencode --replace-quiet "@out@" "$out"
+        ''
+      else
+        ''
+          # Linux: Install binary directly (no wrapper needed)
+          cp opencode $out/bin/opencode
+          chmod +x $out/bin/opencode
+        ''
+    }
 
     runHook postInstall
   '';
