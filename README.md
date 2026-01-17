@@ -142,11 +142,11 @@ This package includes smart Home Manager detection. When Home Manager is detecte
 
 | Variable | Description |
 |----------|-------------|
-| `OPENCODE_NIX_QUIET` | Set to `1` to suppress Home Manager detection messages |
+| `OPENCODE_NIX_VERBOSE` | Set to `1` to enable Home Manager detection and symlink management messages |
 
 Example:
 ```bash
-export OPENCODE_NIX_QUIET=1
+export OPENCODE_NIX_VERBOSE=1
 ```
 
 ## Updating

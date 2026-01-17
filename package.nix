@@ -36,6 +36,9 @@ let
   wrapperScript = ''
     #!/usr/bin/env bash
 
+    # Verbose output (opt-in via OPENCODE_NIX_VERBOSE=1)
+    verbose=''${OPENCODE_NIX_VERBOSE:-0}
+
     # Home Manager detection function
     is_home_manager_active() {
       [[ -n "''${HM_SESSION_VARS:-}" ]] ||
@@ -49,17 +52,16 @@ let
       local symlink_path="$target_dir/opencode"
       local binary_path="@out@/bin/.opencode-unwrapped"
 
-      # If Home Manager is active, clean up any orphaned symlink and skip creation
+      # If Home Manager is active, clean up our symlink if it exists and skip creation
       if is_home_manager_active; then
-        # Remove symlink if it points to a Nix store path (we likely created it)
         if [[ -L "$symlink_path" ]]; then
           local link_target
           link_target="$(readlink "$symlink_path" 2>/dev/null || echo "")"
-          if [[ "$link_target" == /nix/store/* ]]; then
+          # Match exact current path OR any older version of this package
+          if [[ "$link_target" == "$binary_path" ]] || \
+             [[ "$link_target" == /nix/store/*-opencode-* ]]; then
             rm -f "$symlink_path"
-            if [[ -z "''${OPENCODE_NIX_QUIET:-}" ]]; then
-              echo "[opencode-nix] Removed orphaned symlink: $symlink_path (Home Manager now manages opencode)" >&2
-            fi
+            [[ "$verbose" == "1" ]] && echo "[opencode-nix] Removed symlink (Home Manager now manages opencode)" >&2
           fi
         fi
         return 0
@@ -70,16 +72,13 @@ let
       current_target="$(readlink -f "$symlink_path" 2>/dev/null || echo "")"
 
       if [[ "$current_target" == "$binary_path" ]]; then
-        # Symlink already correct, nothing to do
-        return 0
+        return 0  # Already correct
       fi
 
       # Create or update symlink
       mkdir -p "$target_dir"
       ln -sf "$binary_path" "$symlink_path"
-      if [[ -z "''${OPENCODE_NIX_QUIET:-}" ]]; then
-        echo "[opencode-nix] Created symlink: $symlink_path -> $binary_path" >&2
-      fi
+      [[ "$verbose" == "1" ]] && echo "[opencode-nix] Created symlink: $symlink_path -> $binary_path" >&2
     }
 
     # Run symlink management
