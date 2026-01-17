@@ -102,8 +102,11 @@ stdenv.mkDerivation {
       unzip
     ];
 
-  # autoPatchelfHook will find required libraries automatically
-  buildInputs = [ ];
+  # autoPatchelfHook needs stdenv.cc.cc.lib for libstdc++.so.6
+  # Required by bundled native modules (file watcher, state management)
+  buildInputs = lib.optionals stdenv.hostPlatform.isLinux [
+    stdenv.cc.cc.lib
+  ];
 
   dontStrip = true;
 
