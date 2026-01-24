@@ -5,7 +5,7 @@ Nix flake for [OpenCode](https://github.com/anomalyco/opencode) - an AI coding a
 **Features:**
 - Direct binary packaging from GitHub releases
 - Smart Home Manager detection with automatic symlink management
-- Pre-built binaries via Cachix for instant installation
+- Pre-built binaries via Garnix for instant installation
 - Hourly automated updates for new OpenCode versions
 - Linux and macOS support (x86_64 and aarch64)
 
@@ -21,43 +21,11 @@ nix run github:dominicnunez/opencode-nix
 nix profile add github:dominicnunez/opencode-nix
 ```
 
-## Cachix Setup
+## Binary Cache
 
-Use the public binary cache to skip building from source.
+This flake uses [Garnix](https://garnix.io) for CI and binary caching. The `nixConfig` in `flake.nix` automatically configures the cache, so pre-built binaries are fetched without any manual setup.
 
-### Option 1: NixOS Configuration
-
-```nix
-{ config, pkgs, ... }:
-{
-  nix.settings = {
-    substituters = [ "https://opencode.cachix.org" ];
-    trusted-public-keys = [ "opencode.cachix.org-1:LdhuFTs/xrlYuchvsF+cOBCgCKEJIcesw9ef06GPlXU=" ];
-  };
-}
-```
-
-### Option 2: nix.conf
-
-Add to `~/.config/nix/nix.conf`:
-```
-extra-substituters = https://opencode.cachix.org
-extra-trusted-public-keys = opencode.cachix.org-1:LdhuFTs/xrlYuchvsF+cOBCgCKEJIcesw9ef06GPlXU=
-```
-
-### Option 3: Flake nixConfig
-
-```nix
-{
-  nixConfig = {
-    extra-substituters = [ "https://opencode.cachix.org" ];
-    extra-trusted-public-keys = [ "opencode.cachix.org-1:LdhuFTs/xrlYuchvsF+cOBCgCKEJIcesw9ef06GPlXU=" ];
-  };
-
-  inputs.opencode-nix.url = "github:dominicnunez/opencode-nix";
-  # ...
-}
-```
+If prompted to allow configuration from the flake, answer yes or add `accept-flake-config = true` to your Nix configuration.
 
 ## Flake Usage
 
@@ -199,15 +167,7 @@ The script:
 A GitHub Actions workflow runs hourly to check for new releases. When a new version is found, it automatically:
 1. Updates `version.json` with new version and hashes
 2. Validates with `nix flake check`
-3. Creates a PR and merges it
-
-### Repository Settings
-
-For the automated workflow to function, configure these GitHub settings:
-
-**Settings > Actions > General > Workflow permissions:**
-- Select "Read and write permissions"
-- Check "Allow GitHub Actions to create and approve pull requests"
+3. Pushes directly to main
 
 ## License
 

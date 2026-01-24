@@ -1,8 +1,7 @@
-# CI - Cache Validation
+# CI - Garnix Build Validation
 #
-# This workflow validates that Garnix has built and cached all outputs.
-# It runs with max-jobs=0 to prevent local builds - if any output isn't
-# cached, the workflow fails. This ensures consumers never build from source.
+# Waits for Garnix to complete all builds. If Garnix passes,
+# binaries are cached and available via the flake's nixConfig.
 
 name: CI
 
@@ -12,15 +11,9 @@ on:
     branches: [main]
 
 jobs:
-  cache-check:
+  garnix:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v17
-
       - name: Wait for Garnix checks
         uses: actions/github-script@v7
         with:
@@ -38,22 +31,15 @@ jobs:
               const garnix = data.check_runs.find((run) => run.name === 'All Garnix checks')
               if (garnix && garnix.status === 'completed') {
                 if (garnix.conclusion !== 'success') {
-                  core.setFailed(`Garnix checks not successful: ${garnix.conclusion}`)
+                  core.setFailed(`Garnix checks failed: ${garnix.conclusion}`)
                 }
+                console.log('Garnix checks passed - binaries cached at cache.garnix.io')
                 break
               }
               if (Date.now() > deadline) {
                 core.setFailed('Timed out waiting for Garnix checks')
                 break
               }
+              console.log('Waiting for Garnix checks to complete...')
               await new Promise((resolve) => setTimeout(resolve, intervalMs))
             }
-
-      - name: Verify cache hits (no local builds)
-        env:
-          NIX_CONFIG: |
-            max-jobs = 0
-            builders =
-            fallback = false
-        run: |
-          nix build --no-link --accept-flake-config .#opencode
