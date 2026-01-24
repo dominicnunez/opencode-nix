@@ -1,0 +1,5 @@
+# Garnix CI configuration
+# See https://garnix.io/docs for more options
+
+builds:
+  exclude: []
