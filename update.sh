@@ -40,6 +40,23 @@ fetch_hash() {
   hash_to_sri "$hash"
 }
 
+# Check if stored hash matches current upstream hash (spot check one platform)
+verify_current_hash() {
+  local version="$1"
+  local platform="x86_64-linux"  # Use linux x64 as the canary
+
+  local stored_hash
+  stored_hash=$(jq -r ".hashes[\"$platform\"]" "$VERSION_FILE")
+
+  local url
+  url=$(get_download_url "$version" "$platform")
+
+  local current_hash
+  current_hash=$(fetch_hash "$url")
+
+  [[ "$stored_hash" == "$current_hash" ]]
+}
+
 # Get download URL for a platform
 get_download_url() {
   local version="$1"
@@ -86,9 +103,17 @@ main() {
 
   # Compare versions
   if [[ "$current_version" == "$latest_version" ]]; then
-    echo "UPDATE_NEEDED=false"
-    echo "NEW_VERSION=$current_version"
-    exit 0
+    # Version matches, but verify hash hasn't changed (upstream rebuild detection)
+    echo "Verifying upstream hash hasn't changed..." >&2
+    if verify_current_hash "$current_version"; then
+      echo "UPDATE_NEEDED=false"
+      echo "NEW_VERSION=$current_version"
+      exit 0
+    else
+      echo "Hash mismatch detected - upstream rebuilt $current_version" >&2
+      # Fall through to update logic with same version
+      latest_version="$current_version"
+    fi
   fi
 
   echo "UPDATE_NEEDED=true"
