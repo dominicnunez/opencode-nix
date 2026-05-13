@@ -50,7 +50,7 @@ If prompted to allow configuration from the flake, answer yes or add `accept-fla
 { inputs, pkgs, ... }:
 {
   environment.systemPackages = [
-    inputs.opencode-nix.packages.${pkgs.system}.default
+    inputs.opencode-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
 }
 ```
@@ -61,7 +61,7 @@ If prompted to allow configuration from the flake, answer yes or add `accept-fla
 { inputs, pkgs, ... }:
 {
   home.packages = [
-    inputs.opencode-nix.packages.${pkgs.system}.default
+    inputs.opencode-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
 }
 ```
